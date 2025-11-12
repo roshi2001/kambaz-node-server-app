@@ -16,15 +16,42 @@ import db from "./Kambaz/Database/index.js";
 
 const app = express();
 
+
+const isProd = process.env.NODE_ENV === "production"; // CHANGED
+
+
 const CLIENT_URL = (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
+const ALLOWED_ORIGINS = [
+  CLIENT_URL,
+  "https://kambaz-next-js-33t1.vercel.app", 
+  "http://localhost:3000",                    
+];
 
 
 app.use(
   cors({
-    origin: CLIENT_URL,
+    origin(origin, cb) {
+      if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+      return cb(new Error("CORS blocked for origin: " + origin), false);
+    },
     credentials: true,
   })
 );
+
+
+app.options(
+  "*",
+  cors({
+    origin: ALLOWED_ORIGINS,
+    credentials: true,
+  })
+);
+
+
+app.use(express.json()); 
+
+
+if (isProd) app.set("trust proxy", 1); 
 
 
 const sessionOptions = {
@@ -32,28 +59,14 @@ const sessionOptions = {
   resave: false,
   saveUninitialized: false,
   cookie: {
-    
-    sameSite: "lax",
-    secure: false,
+    httpOnly: true,                      
+    sameSite: isProd ? "none" : "lax",    
+    secure:   isProd ? true   : false,    
   },
 };
 
-if (process.env.SERVER_ENV === "production") {
- 
-  app.set("trust proxy", 1); 
-  sessionOptions.cookie = {
-    sameSite: "none",
-    secure: true,
-    
-  };
-}
-
 app.use(session(sessionOptions));
 
-
-app.use(express.json());
-
-// Routes
 UserRoutes(app, db);
 CourseRoutes(app, db);
 ModulesRoutes(app, db);
@@ -61,7 +74,6 @@ AssignmentRoutes(app, db);
 EnrollmentRoutes(app, db);
 Lab5(app);
 Hello(app);
-
 
 app.get("/api/health", (_req, res) => res.send({ ok: true }));
 

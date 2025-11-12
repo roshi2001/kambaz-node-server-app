@@ -1,0 +1,114 @@
+let todos = [
+  { id: 1, title: "Task 1", completed: false },
+  { id: 2, title: "Task 2", completed: true },
+  { id: 3, title: "Task 3", completed: false },
+  { id: 4, title: "Task 4", completed: true },
+  { id: 5, title : "1234", completed: false},
+
+];
+
+export default function WorkingWithArrays(app) {
+  const createNewTodo = (req, res) => {
+    const newTodo = { id: Date.now(), title: "New Task", completed: false };
+    todos.push(newTodo);
+    res.json(todos);
+  };
+
+  const getTodos = (req, res) => {
+    const { completed } = req.query;
+    if (typeof completed !== "undefined") {
+      const completedBool = ["true", "1", "yes", "on"]
+        .includes(String(completed).toLowerCase().trim());
+      const filtered = todos.filter(t => t.completed === completedBool);
+      return res.json(filtered);
+    }
+    res.json(todos);
+  };
+
+  const getTodoById = (req, res) => {
+    const idNum = parseInt(req.params.id, 10);
+    const todo = todos.find(t => t.id === idNum);
+    res.json(todo ?? {});
+  };
+
+  const removeTodo = (req, res) => {
+    const idNum = parseInt(req.params.id, 10);
+    const idx = todos.findIndex(t => t.id === idNum);
+    if (idx === -1) return res.status(404).json({ error: "Todo not found" });
+    todos.splice(idx, 1);
+    res.json(todos);
+  };
+    const deleteTodo = (req, res) => {
+    const { id } = req.params;
+    const todoIndex = todos.findIndex((t) => t.id === parseInt(id));
+    if (todoIndex === -1) {
+      res.status(404).json({ message: `Unable to delete Todo with ID ${id}` });
+      return;
+    }
+
+    todos.splice(todoIndex, 1);
+    res.sendStatus(200);
+  };
+  
+
+  const updateTodoTitle = (req, res) => {
+    const idNum = parseInt(req.params.id, 10);
+    const todo = todos.find(t => t.id === idNum);
+    if (!todo) return res.status(404).json({ error: "Todo not found" });
+    todo.title = req.params.title;
+    res.json(todos);
+  };
+
+  app.get("/lab5/todos/:id/completed/:completed", (req, res) => {
+    const idNum = parseInt(req.params.id, 10);
+    const todo = todos.find(t => t.id === idNum);
+    if (!todo) return res.status(404).json({ error: "Todo not found" });
+
+    const done = ["true", "1", "yes", "on"]
+      .includes(String(req.params.completed).toLowerCase());
+    todo.completed = done;
+    res.json(todos);
+  });
+
+  app.get("/lab5/todos/:id/description/:description", (req, res) => {
+    const idNum = parseInt(req.params.id, 10);
+    const todo = todos.find(t => t.id === idNum);
+    if (!todo) return res.status(404).json({ error: "Todo not found" });
+
+   
+    todo.description = req.params.description;
+    res.json(todos);
+  });
+    const postNewTodo = (req, res) => {
+    const newTodo = { ...req.body, id: new Date().getTime() };
+    todos.push(newTodo);
+    res.json(newTodo);
+  };
+   const updateTodo = (req, res) => {
+    const { id } = req.params;
+     const todoIndex = todos.findIndex((t) => t.id === parseInt(id));
+    if (todoIndex === -1) {
+      res.status(404).json({ message: `Unable to update Todo with ID ${id}` });
+      return;
+    }
+
+    todos = todos.map((t) => {
+      if (t.id === parseInt(id)) {
+        return { ...t, ...req.body };
+      }
+      return t;
+    });
+    res.sendStatus(200);
+  };
+  app.put("/lab5/todos/:id", updateTodo);
+
+
+  
+  app.get("/lab5/todos", getTodos);
+  app.get("/lab5/todos/create", createNewTodo);
+  app.get("/lab5/todos/:id", getTodoById);
+  app.delete("/lab5/todos/:id", deleteTodo);
+  app.get("/lab5/todos/:id/delete", removeTodo);
+  app.get("/lab5/todos/:id/title/:title", updateTodoTitle);
+    app.post("/lab5/todos", postNewTodo);
+}

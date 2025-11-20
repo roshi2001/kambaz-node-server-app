@@ -24,7 +24,7 @@ const isProd = process.env.NODE_ENV === "production";
 
 
 const ALLOWED_ORIGINS = [
-  "https://kambaz-next-js-33t1.vercel.app",
+    "https://kambaz-next-js-zj63.vercel.app",
   "http://localhost:3000",
 ];
 

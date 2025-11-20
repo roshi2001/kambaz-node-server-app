@@ -1,8 +1,9 @@
+// index.js
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import session from "express-session";
-
+import mongoose from "mongoose";
 import Hello from "./Hello.js";
 import Lab5 from "./Lab5/index.js";
 
@@ -13,47 +14,54 @@ import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 import ModulesRoutes from "./Kambaz/Modules/routes.js";
 
 import db from "./Kambaz/Database/index.js";
+import usersModel from "./Kambaz/Users/model.js";
+
+const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/Kambaz"
+mongoose.connect(CONNECTION_STRING);
 
 const app = express();
+const isProd = process.env.NODE_ENV === "production";
 
-const CLIENT_URL = (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
 
+const ALLOWED_ORIGINS = [
+  "https://kambaz-next-js-33t1.vercel.app",
+  "http://localhost:3000",
+];
 
 app.use(
   cors({
-    origin: CLIENT_URL,
+    origin(origin, cb) {
+      
+      if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+      return cb(new Error("CORS blocked for origin: " + origin), false);
+    },
     credentials: true,
   })
 );
 
 
+
+app.use(express.json());
+
+
+if (isProd) app.set("trust proxy", 1); 
+
 const sessionOptions = {
+  name: "sid",
   secret: process.env.SESSION_SECRET || "kambaz",
   resave: false,
   saveUninitialized: false,
   cookie: {
-    
-    sameSite: "lax",
-    secure: false,
+    httpOnly: true,
+    sameSite: isProd ? "none" : "lax", 
+    secure: isProd ? true : false,      
+   
   },
 };
 
-if (process.env.SERVER_ENV === "production") {
- 
-  app.set("trust proxy", 1); 
-  sessionOptions.cookie = {
-    sameSite: "none",
-    secure: true,
-    
-  };
-}
 
 app.use(session(sessionOptions));
-
-
-app.use(express.json());
-
-// Routes
+db.users = usersModel;
 UserRoutes(app, db);
 CourseRoutes(app, db);
 ModulesRoutes(app, db);
@@ -63,7 +71,8 @@ Lab5(app);
 Hello(app);
 
 
-app.get("/api/health", (_req, res) => res.send({ ok: true }));
+app.get("/api/health", (_req, res) => res.json({ ok: true }));
+
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server listening on ${PORT}`));

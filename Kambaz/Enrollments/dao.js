@@ -1,10 +1,19 @@
 import { v4 as uuidv4 } from "uuid";
+export async function findCoursesForUser(userId) {
+ const enrollments = await model.find({ user: userId }).populate("course");
+ return enrollments.map((enrollment) => enrollment.course);
+}
 
 export default function EnrollmentsDao(db) {
     function enrollUserInCourse(userId, courseId) {
-    const { enrollments } = db;
-    enrollments.push({ _id: uuidv4(), user: userId, course: courseId });
-  }
+   return model.create({
+     user: userId,
+     course: courseId,
+     _id: `${userId}-${courseId}`,
+   });
+ }
+
+
 
   function findByUser(uid) {
     const { enrollments } = db;
@@ -43,6 +52,10 @@ export default function EnrollmentsDao(db) {
     );
     return db.enrollments.length < before;
   }
+   function unenrollAllUsersFromCourse(courseId) {
+   return model.deleteMany({ course: courseId });
+ }
+
 
   return {
     findByUser,
@@ -50,6 +63,9 @@ export default function EnrollmentsDao(db) {
     createEnrollment,
     deleteById,
     deleteByPair,
-    enrollUserInCourse
+    enrollUserInCourse,
+     unenrollAllUsersFromCourse,
+     findCoursesForUser
+
   };
 }

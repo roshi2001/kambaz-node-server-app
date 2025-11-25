@@ -3,21 +3,17 @@ import UsersDao from "./dao.js";
 export default function UserRoutes(app) {
   const dao = UsersDao();
 
-  // CREATE USER (ADMIN)
     const createUser = async (req, res) => {
     const user = await dao.createUser(req.body);
     res.json(user);
   };
 
-
-  // DELETE
   const deleteUser = async (req, res) => {
       const status = await dao.deleteUser(req.params.userId);
       res.json(status);
   };
 
 
-  // GET ALL USERS
    const findAllUsers = async (req, res) => {
     const { role, name } = req.query;
     if (role) {
@@ -35,28 +31,31 @@ export default function UserRoutes(app) {
   };
 
 
-  // FIND BY ID
   const findUserById = async (req, res) => {
     const user = await dao.findUserById(req.params.userId);
     res.json(user);
   };
 
 
-  // UPDATE USER
   const updateUser = async (req, res) => {
-    const { userId } = req.params;
-    const userUpdates = req.body;
-    await dao.updateUser(userId, userUpdates);
-    const currentUser = req.session["currentUser"];
-   if (currentUser && currentUser._id === userId) {
-     req.session["currentUser"] = { ...currentUser, ...userUpdates };
-   }
-   res.json(currentUser);
-  };
+  const { userId } = req.params;
+  const userUpdates = req.body;
+
+  await dao.updateUser(userId, userUpdates);
+
+  const updatedUser = await dao.findUserById(userId);
+
+  if (
+    req.session.currentUser &&
+    req.session.currentUser._id.toString() === userId
+  ) {
+    req.session.currentUser = updatedUser;
+  }
+
+  res.json(updatedUser);
+};
 
 
-
-  // SIGNUP
   const signup = async (req, res) => {
     const existingUser = await dao.findUserByUsername(req.body.username);
     if (existingUser) {
@@ -67,7 +66,6 @@ export default function UserRoutes(app) {
     res.json(currentUser);
   };
 
-  // SIGNIN
   const signin = async (req, res) => {
     const { username, password } = req.body;
     const currentUser = await dao.findUserByCredentials(username, password);
@@ -80,13 +78,12 @@ export default function UserRoutes(app) {
     res.json(currentUser);
   };
 
-  // SIGNOUT
+
   const signout = (req, res) => {
     req.session.destroy();
     res.sendStatus(200);
   };
 
-  // PROFILE
   const profile = async (req, res) => {
     const sessionUser = req.session["currentUser"];
     if (!sessionUser) return res.sendStatus(401);
@@ -97,7 +94,6 @@ export default function UserRoutes(app) {
     res.json(freshUser);
   };
 
-  // ROUTE REGISTRATIONS
   app.post("/api/users/signin", signin);
   app.post("/api/users/signup", signup);
   app.post("/api/users/signout", signout);

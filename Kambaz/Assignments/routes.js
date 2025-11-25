@@ -1,35 +1,34 @@
 // Kambaz/Assignments/routes.js
-import AssignmentsDao from "./dao.js";
+import * as dao from "./dao.js";
 
-export default function AssignmentsRoutes(app, db) {
-  const dao = AssignmentsDao(db);
+export default function AssignmentsRoutes(app) {
 
-  const findAssignmentsForCourse = (req, res) => {
+  const findAssignmentsForCourse = async (req, res) => {
     const { cid } = req.params;
-    const list = dao.findAssignmentsForCourse(cid);
+    const list = await dao.findAssignmentsForCourse(cid);
     res.json(list);
   };
 
-  const createAssignmentForCourse = (req, res) => {
+  const createAssignmentForCourse = async (req, res) => {
     const { cid } = req.params;
-    const created = dao.createAssignmentForCourse(cid, req.body || {});
+    const created = await dao.createAssignmentForCourse(cid, req.body || {});
     res.status(201).json(created);
   };
 
-  const findAssignmentById = (req, res) => {
-    const one = dao.findAssignmentById(req.params.aid);
+  const findAssignmentById = async (req, res) => {
+    const one = await dao.findAssignmentById(req.params.aid);
     if (!one) return res.sendStatus(404);
     res.json(one);
   };
 
-  const updateAssignment = (req, res) => {
-    const updated = dao.updateAssignment(req.params.aid, req.body || {});
+  const updateAssignment = async (req, res) => {
+    const updated = await dao.updateAssignment(req.params.aid, req.body || {});
     if (!updated) return res.sendStatus(404);
     res.json(updated);
   };
 
-  const deleteAssignment = (req, res) => {
-    dao.deleteAssignment(req.params.aid);
+  const deleteAssignment = async (req, res) => {
+    await dao.deleteAssignment(req.params.aid);
     res.sendStatus(204);
   };
 

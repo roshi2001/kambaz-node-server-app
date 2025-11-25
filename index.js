@@ -16,21 +16,22 @@ import ModulesRoutes from "./Kambaz/Modules/routes.js";
 import db from "./Kambaz/Database/index.js";
 import usersModel from "./Kambaz/Users/model.js";
 
-// ✅ Mongo connection
-const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING;
+// ✅ MongoDB
+const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/Kambaz";
+
 mongoose.connect(CONNECTION_STRING)
-  .then(() => console.log("MongoDB connected successfully"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .then(() => console.log("✅ MongoDB connected successfully"))
+  .catch(err => console.error("❌ MongoDB error:", err));
 
 const app = express();
 
-// ✅ FORCE production for Render
-const isProd = true;
+// ✅ IMPORTANT: Detect environment properly
+const isProd = process.env.NODE_ENV === "production";
 
-// ✅ Allow Vercel frontend
+// ✅ Allow both local + deployed frontend
 const ALLOWED_ORIGINS = [
-  "https://kambaz-next-js-zj63.vercel.app",
-  "http://localhost:3000"
+  "http://localhost:3000",
+  "https://kambaz-next-js-73zh.vercel.app"
 ];
 
 app.use(cors({
@@ -38,13 +39,16 @@ app.use(cors({
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
     return cb(new Error("CORS blocked: " + origin), false);
   },
-  credentials: true,
+  credentials: true
 }));
 
 app.use(express.json());
-app.set("trust proxy", 1);
 
-// ✅ SESSION FIX (THIS IS THE KEY)
+if (isProd) {
+  app.set("trust proxy", 1);
+}
+
+// ✅ SESSION CONFIG (FIXED)
 app.use(session({
   name: "sid",
   secret: process.env.SESSION_SECRET || "kambaz",
@@ -52,22 +56,23 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    sameSite: "none",
-    secure: true
+    sameSite: isProd ? "none" : "lax",
+    secure: isProd ? true : false
   }
 }));
 
 db.users = usersModel;
 
-UserRoutes(app, db);
-CourseRoutes(app, db);
-ModulesRoutes(app, db);
-AssignmentRoutes(app, db);
-EnrollmentRoutes(app, db);
+UserRoutes(app);
+CourseRoutes(app);  
+ModulesRoutes(app); 
+AssignmentRoutes(app); 
+EnrollmentRoutes(app);
+
 Lab5(app);
 Hello(app);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server listening on ${PORT}`));

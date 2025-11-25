@@ -1,71 +1,41 @@
 import { v4 as uuidv4 } from "uuid";
-export async function findCoursesForUser(userId) {
- const enrollments = await model.find({ user: userId }).populate("course");
- return enrollments.map((enrollment) => enrollment.course);
-}
+import model from "./model.js";
 
-export default function EnrollmentsDao(db) {
-    function enrollUserInCourse(userId, courseId) {
-   return model.create({
-     user: userId,
-     course: courseId,
-     _id: `${userId}-${courseId}`,
-   });
- }
-
-
-
-  function findByUser(uid) {
-    const { enrollments } = db;
-    return enrollments.filter(
-      (e) => String(e.user) === String(uid)
-    );
+export default function EnrollmentsDao() {
+  
+  async function findCoursesForUser(userId) {
+    const enrollments = await model.find({ user: userId }).populate("course");
+    return enrollments.map((enrollment) => enrollment.course);
   }
 
-  function findByUserAndCourse(uid, cid) {
-    const { enrollments } = db;
-    return enrollments.find(
-      (e) => String(e.user) === String(uid) && String(e.course) === String(cid)
-    );
+  async function findUsersForCourse(courseId) {
+    const enrollments = await model.find({ course: courseId }).populate("user");
+    return enrollments.map((enrollment) => enrollment.user);
   }
 
-  function createEnrollment(user, course) {
-    const existing = findByUserAndCourse(user, course);
-    if (existing) return existing; // idempotent
-    const newE = { _id: uuidv4(), user: String(user), course: String(course) };
-    db.enrollments = [...db.enrollments, newE];
-    return newE;
+  function enrollUserInCourse(userId, courseId) {
+    return model.create({
+      user: userId,
+      course: courseId,
+      _id: `${userId}-${courseId}`,
+    });
   }
 
-  function deleteById(eid) {
-    const { enrollments } = db;
-    const before = enrollments.length;
-    db.enrollments = enrollments.filter((e) => e._id !== eid);
-    return db.enrollments.length < before;
+  function unenrollUserFromCourse(userId, courseId) {
+    return model.deleteOne({ user: userId, course: courseId });
   }
 
-  function deleteByPair(uid, cid) {
-    const { enrollments } = db;
-    const before = enrollments.length;
-    db.enrollments = enrollments.filter(
-      (e) => !(String(e.user) === String(uid) && String(e.course) === String(cid))
-    );
-    return db.enrollments.length < before;
+  function unenrollAllUsersFromCourse(courseId) {
+    return model.deleteMany({ course: courseId });
   }
-   function unenrollAllUsersFromCourse(courseId) {
-   return model.deleteMany({ course: courseId });
- }
 
+ 
 
   return {
-    findByUser,
-    findByUserAndCourse,
-    createEnrollment,
-    deleteById,
-    deleteByPair,
+    findCoursesForUser,
+    findUsersForCourse,
     enrollUserInCourse,
-     unenrollAllUsersFromCourse,
-     findCoursesForUser
-
-  };
+    unenrollUserFromCourse,
+    unenrollAllUsersFromCourse
+  }
 }

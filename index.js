@@ -16,19 +16,18 @@ import ModulesRoutes from "./Kambaz/Modules/routes.js";
 import db from "./Kambaz/Database/index.js";
 import usersModel from "./Kambaz/Users/model.js";
 
-// ✅ MongoDB
 const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/Kambaz";
 
 mongoose.connect(CONNECTION_STRING)
-  .then(() => console.log("✅ MongoDB connected successfully"))
-  .catch(err => console.error("❌ MongoDB error:", err));
+  .then(() => console.log(" MongoDB connected successfully"))
+  .catch(err => console.error(" MongoDB error:", err));
 
 const app = express();
 
-// ✅ IMPORTANT: Detect environment properly
+
 const isProd = process.env.NODE_ENV === "production";
 
-// ✅ Allow both local + deployed frontend
+
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "https://kambaz-next-js-73zh.vercel.app"
@@ -48,7 +47,7 @@ if (isProd) {
   app.set("trust proxy", 1);
 }
 
-// ✅ SESSION CONFIG (FIXED)
+
 app.use(session({
   name: "sid",
   secret: process.env.SESSION_SECRET || "kambaz",
@@ -60,6 +59,10 @@ app.use(session({
     secure: isProd ? true : false
   }
 }));
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
 
 db.users = usersModel;
 

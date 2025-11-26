@@ -42,10 +42,8 @@ app.use(session({
   saveUninitialized: false,
   store: MongoStore.create({
     mongoUrl: CONNECTION_STRING,
-    touchAfter: 24 * 3600,
-    crypto: {
-      secret: process.env.SESSION_SECRET || "kambaz"
-    }
+    touchAfter: 24 * 3600
+    // REMOVED crypto option - this was causing the error!
   }),
   cookie: {
     httpOnly: true,

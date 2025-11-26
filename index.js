@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import session from "express-session";
 import mongoose from "mongoose";
+import MongoStore from "connect-mongo";
 
 import Hello from "./Hello.js";
 import Lab5 from "./Lab5/index.js";
@@ -27,7 +28,9 @@ app.set("trust proxy", 1);
 
 app.use(cors({
   origin: "https://kambaz-next-js-73zh.vercel.app",
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
@@ -37,10 +40,18 @@ app.use(session({
   secret: process.env.SESSION_SECRET || "kambaz",
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: CONNECTION_STRING,
+    touchAfter: 24 * 3600,
+    crypto: {
+      secret: process.env.SESSION_SECRET || "kambaz"
+    }
+  }),
   cookie: {
     httpOnly: true,
     secure: true,
-    sameSite: "none"
+    sameSite: "none",
+    maxAge: 1000 * 60 * 60 * 24 * 7
   }
 }));
 

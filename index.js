@@ -16,37 +16,25 @@ import ModulesRoutes from "./Kambaz/Modules/routes.js";
 import db from "./Kambaz/Database/index.js";
 import usersModel from "./Kambaz/Users/model.js";
 
-const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/Kambaz";
+const CONNECTION_STRING =
+  process.env.DATABASE_CONNECTION_STRING ||
+  "mongodb://127.0.0.1:27017/Kambaz";
 
 mongoose.connect(CONNECTION_STRING)
-  .then(() => console.log(" MongoDB connected successfully"))
-  .catch(err => console.error(" MongoDB error:", err));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error("❌ MongoDB error:", err));
 
 const app = express();
 
 
-const isProd = process.env.NODE_ENV === "production";
-
-
-const ALLOWED_ORIGINS = [
-  "http://localhost:3000",
-  "https://kambaz-next-js-73zh.vercel.app"
-];
+app.set("trust proxy", 1);
 
 app.use(cors({
-  origin(origin, cb) {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    return cb(new Error("CORS blocked: " + origin), false);
-  },
+  origin: "https://kambaz-next-js-73zh.vercel.app",
   credentials: true
 }));
 
 app.use(express.json());
-
-if (isProd) {
-  app.set("trust proxy", 1);
-}
-
 
 app.use(session({
   name: "sid",
@@ -55,21 +43,17 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    sameSite: isProd ? "none" : "lax",
-    secure: isProd ? true : false
+    sameSite: "none",
+    secure: true
   }
 }));
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Credentials", "true");
-  next();
-});
 
 db.users = usersModel;
 
 UserRoutes(app);
-CourseRoutes(app);  
-ModulesRoutes(app); 
-AssignmentRoutes(app); 
+CourseRoutes(app);
+ModulesRoutes(app);
+AssignmentRoutes(app);
 EnrollmentRoutes(app);
 
 Lab5(app);

@@ -13,7 +13,12 @@ export default function EnrollmentsDao() {
     return enrollments.map((enrollment) => enrollment.user);
   }
 
-  function enrollUserInCourse(userId, courseId) {
+  async function findByUser(userId) {
+    return await model.find({ user: userId });
+  }
+
+
+  function createEnrollment(userId, courseId) {
     return model.create({
       user: userId,
       course: courseId,
@@ -21,21 +26,27 @@ export default function EnrollmentsDao() {
     });
   }
 
-  function unenrollUserFromCourse(userId, courseId) {
+  function deleteByPair(userId, courseId) {
     return model.deleteOne({ user: userId, course: courseId });
+  }
+
+
+  async function deleteById(enrollmentId) {
+    const result = await model.deleteOne({ _id: enrollmentId });
+    return result.deletedCount > 0;
   }
 
   function unenrollAllUsersFromCourse(courseId) {
     return model.deleteMany({ course: courseId });
   }
 
- 
-
   return {
     findCoursesForUser,
     findUsersForCourse,
-    enrollUserInCourse,
-    unenrollUserFromCourse,
+    findByUser,             
+    createEnrollment,        
+    deleteByPair,            
+    deleteById,              
     unenrollAllUsersFromCourse
   }
 }

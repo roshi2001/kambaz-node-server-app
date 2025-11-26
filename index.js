@@ -27,7 +27,7 @@ mongoose.connect(CONNECTION_STRING)
 app.set("trust proxy", 1);
 
 app.use(cors({
-  origin: "https://kambaz-next-js-73zh.vercel.app",
+  origin: "https://kambaz-next-js-fuu8.vercel.app",
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -43,7 +43,7 @@ app.use(session({
   store: MongoStore.create({
     mongoUrl: CONNECTION_STRING,
     touchAfter: 24 * 3600
-    // REMOVED crypto option - this was causing the error!
+    
   }),
   cookie: {
     httpOnly: true,

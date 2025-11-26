@@ -1,8 +1,8 @@
+// index.js
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import session from "express-session";
-import MongoStore from "connect-mongo";
 import mongoose from "mongoose";
 
 import Hello from "./Hello.js";
@@ -14,55 +14,52 @@ import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
 import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 import ModulesRoutes from "./Kambaz/Modules/routes.js";
 
-import db from "./Kambaz/Database/index.js";
-import usersModel from "./Kambaz/Users/model.js";
+const app = express();
+const isProd = process.env.NODE_ENV === "production";
 
+/* ✅ CONNECT TO MONGODB ATLAS */
 const CONNECTION_STRING =
   process.env.DATABASE_CONNECTION_STRING ||
-  "mongodb://127.0.0.1:27017/Kambaz";
+  "mongodb://127.0.0.1:27017/kambaz";
 
 mongoose.connect(CONNECTION_STRING)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB error:", err));
+  .then(() => console.log(" MongoDB connected successfully"))
+  .catch(err => console.error(" MongoDB connection error:", err));
 
-const app = express();
 
-app.set("trust proxy", 1);
+const ALLOWED_ORIGINS = [
+  "https://kambaz-next-js-73zh.vercel.app",
+  "http://localhost:3000",
+];
 
 app.use(cors({
-  origin: "https://kambaz-next-js-73zh.vercel.app",
-  credentials: true
+  origin(origin, cb) {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    return cb(new Error("CORS blocked for origin: " + origin), false);
+  },
+  credentials: true,
 }));
 
 app.use(express.json());
 
-app.use(session({
+if (isProd) app.set("trust proxy", 1);
+
+/* ✅ SESSION */
+const sessionOptions = {
   name: "sid",
   secret: process.env.SESSION_SECRET || "kambaz",
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: CONNECTION_STRING,
-    touchAfter: 24 * 3600
-  }),
   cookie: {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 24 * 60 * 60 * 1000
-  }
-}));
+    sameSite: isProd ? "none" : "lax",
+    secure: isProd ? true : false,
+  },
+};
 
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`, {
-    sessionID: req.sessionID,
-    user: req.session?.currentUser?._id || null
-  });
-  next();
-});
+app.use(session(sessionOptions));
 
-db.users = usersModel;
-
+/* ✅ ROUTES (NO MORE LOCAL DB) */
 UserRoutes(app);
 CourseRoutes(app);
 ModulesRoutes(app);
@@ -71,16 +68,7 @@ EnrollmentRoutes(app);
 Lab5(app);
 Hello(app);
 
-app.get("/api/health", (_req, res) => {
-  res.json({
-    ok: true,
-    session: !!_req.session,
-    user: _req.session?.currentUser || null
-  });
-});
+app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 Frontend allowed: https://kambaz-next-js-73zh.vercel.app`);
-});
+app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));

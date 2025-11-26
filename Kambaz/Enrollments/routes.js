@@ -44,7 +44,7 @@ export default function EnrollmentsRoutes(app) {
     res.json(courses);
   };
 
-  // routes
+  
   app.get("/api/users/:uid/enrollments", findEnrollmentsForUser);
   app.get("/api/users/:userId/courses", findCoursesForEnrolledUser);
   app.post("/api/enrollments", enrollInCourse);

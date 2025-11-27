@@ -27,18 +27,27 @@ export default function CourseRoutes(app) {
   app.get("/api/users/:userId/courses", findCoursesForEnrolledUser);
 
   const createCourse = async (req, res) => {
-  const currentUser = req.session["currentUser"];
-  const newCourse = await dao.createCourse(req.body);
+  try {  
+    const currentUser = req.session["currentUser"];
+    
+    if (!currentUser) { 
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
+    const newCourse = await dao.createCourse(req.body);
 
-  
-  if (currentUser.role === "FACULTY") {
-    await enrollmentsDao.enrollUserInCourse(
-      currentUser._id,
-      newCourse._id
-    );
+    if (currentUser.role === "FACULTY") { 
+      await enrollmentsDao.enrollUserInCourse(
+        currentUser._id,
+        newCourse._id
+      );
+    }
+
+    res.json(newCourse);
+  } catch (error) {  
+    console.error("Create course error:", error);
+    res.status(500).json({ message: "Failed to create course", error: error.message });
   }
-
-  res.json(newCourse);
 };
   app.post("/api/users/current/courses", createCourse);
 

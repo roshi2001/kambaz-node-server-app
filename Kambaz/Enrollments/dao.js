@@ -44,9 +44,11 @@ export default function EnrollmentsDao() {
     findCoursesForUser,
     findUsersForCourse,
     findByUser,             
-    createEnrollment,        
+    createEnrollment,  
+    enrollUserInCourse: createEnrollment,      
     deleteByPair,            
     deleteById,              
-    unenrollAllUsersFromCourse
+    unenrollAllUsersFromCourse,
+    unenrollUserFromCourse: deleteByPair 
   }
 }
